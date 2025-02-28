@@ -26,6 +26,7 @@ import {
   FileText,
   Lock,
   UserCog,
+  LayoutDashboard,
 } from "lucide-react";
 import { ModeToggle } from "../mode-toggle";
 
@@ -34,6 +35,7 @@ export function MainSidebar() {
   const [collapsed, setCollapsed] = useState(false);
 
   const menuItems = [
+    { icon: LayoutDashboard, label: "Tổng quan", path: "/dashboard" }, // Thêm mục Dashboard
     { icon: Users, label: "Nhân viên", path: "/employees" },
     { icon: ClipboardCheck, label: "Chấm công", path: "/attendance" },
     { icon: Calendar, label: "Ngày nghỉ", path: "/leave" },
@@ -43,7 +45,7 @@ export function MainSidebar() {
     { icon: Building, label: "Công trình", path: "/constructions" },
     { icon: FileText, label: "Hồ sơ năng lực", path: "/portfolio" },
     { icon: BarChart3, label: "Báo cáo", path: "/reports" },
-    { icon: UserCog, label: "Người dùng", path: "/user-management" }, // Thêm mục menu mới
+    { icon: UserCog, label: "Người dùng", path: "/user-management" },
     { icon: Settings, label: "Cài đặt", path: "/settings" },
   ];
 

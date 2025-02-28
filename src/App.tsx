@@ -9,7 +9,8 @@ import NotFound from "./pages/NotFound";
 import Employees from "./pages/Employees";
 import Attendance from "./pages/Attendance";
 import Projects from "./pages/Projects";
-import UserManagement from "./pages/UserManagement"; // Thêm import
+import UserManagement from "./pages/UserManagement";
+import Dashboard from "./pages/Dashboard"; // Thêm import
 
 const queryClient = new QueryClient();
 
@@ -24,7 +25,8 @@ const App = () => (
           <Route path="/employees" element={<Employees />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/projects" element={<Projects />} />
-          <Route path="/user-management" element={<UserManagement />} /> {/* Thêm route mới */}
+          <Route path="/user-management" element={<UserManagement />} />
+          <Route path="/dashboard" element={<Dashboard />} /> {/* Thêm route mới */}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
