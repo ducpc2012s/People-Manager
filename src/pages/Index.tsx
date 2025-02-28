@@ -172,7 +172,7 @@ const Index = () => {
                     <Badge
                       variant={
                         project.status === "Hoàn thiện"
-                          ? "success"
+                          ? "default"
                           : project.status === "Thiết kế"
                           ? "outline"
                           : "default"
