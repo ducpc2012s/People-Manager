@@ -45,12 +45,12 @@ const Dashboard = () => {
     version: "1.2.3",
     alerts: [
       {
-        type: "warning",
+        type: "destructive", // Đã sửa từ "warning" thành "destructive"
         message: "Cập nhật phiên bản mới có sẵn",
         time: "2 giờ trước",
       },
       {
-        type: "info",
+        type: "default",
         message: "Sao lưu dữ liệu tự động hoàn tất",
         time: "6 giờ trước",
       },
@@ -301,7 +301,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <Alert variant="warning" className="bg-amber-50 dark:bg-amber-900/20">
+                    <Alert variant="destructive" className="bg-amber-50 dark:bg-amber-900/20">
                       <AlertTriangle className="h-4 w-4" />
                       <AlertTitle>Cập nhật hệ thống</AlertTitle>
                       <AlertDescription>
@@ -534,14 +534,14 @@ const Dashboard = () => {
                       {systemStatus.alerts.map((alert, index) => (
                         <Alert
                           key={index}
-                          variant={alert.type === "warning" ? "warning" : "default"}
+                          variant={alert.type}
                           className={
-                            alert.type === "warning"
+                            alert.type === "destructive"
                               ? "bg-amber-50 dark:bg-amber-900/20"
                               : "bg-blue-50 dark:bg-blue-900/20"
                           }
                         >
-                          {alert.type === "warning" ? (
+                          {alert.type === "destructive" ? (
                             <AlertTriangle className="h-4 w-4" />
                           ) : (
                             <Bell className="h-4 w-4" />
