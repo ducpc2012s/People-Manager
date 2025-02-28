@@ -34,6 +34,7 @@ import {
   Calendar,
   Check,
   Clock,
+  Eye,
   LayoutGrid,
   List,
   MoreHorizontal,
@@ -62,6 +63,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // Mock projects data
 const projectsData = [
