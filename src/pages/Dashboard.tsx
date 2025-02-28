@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/layout/page-layout";
 import { PageHeader } from "@/components/layout/page-header";
@@ -22,7 +23,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   BarChart,
-  Calendar,
+  // Loại bỏ import Calendar ở đây để tránh trùng
   ChevronDown,
   CreditCard,
   Gauge,
@@ -509,7 +510,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {alertsData.map((alert) => (
-              <Alert variant="destructive" className="bg-amber-50 dark:bg-amber-900/20">
+              <Alert key={alert.id} variant="destructive" className="bg-amber-50 dark:bg-amber-900/20">
                 {alert.type === "destructive" ? (
                   <AlertTriangle className="h-4 w-4" />
                 ) : (
