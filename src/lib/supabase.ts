@@ -1,8 +1,14 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Kiểm tra biến môi trường hoặc sử dụng giá trị mặc định để tránh lỗi
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-url.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+
+// Tạo client Supabase với thông báo lỗi rõ ràng nếu thiếu thông tin
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.error("Thiếu thông tin kết nối Supabase. Vui lòng cung cấp VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY trong file .env");
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
