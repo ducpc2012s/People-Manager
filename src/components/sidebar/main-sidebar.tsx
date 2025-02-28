@@ -9,7 +9,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,6 +25,7 @@ import {
   Briefcase,
   FileText,
   Lock,
+  UserCog,
 } from "lucide-react";
 import { ModeToggle } from "../mode-toggle";
 
@@ -43,15 +43,12 @@ export function MainSidebar() {
     { icon: Building, label: "Công trình", path: "/constructions" },
     { icon: FileText, label: "Hồ sơ năng lực", path: "/portfolio" },
     { icon: BarChart3, label: "Báo cáo", path: "/reports" },
+    { icon: UserCog, label: "Người dùng", path: "/user-management" }, // Thêm mục menu mới
     { icon: Settings, label: "Cài đặt", path: "/settings" },
   ];
 
   return (
-    <Sidebar
-      className="border-r shadow-sm"
-      defaultCollapsed={collapsed}
-      onCollapsedChange={setCollapsed}
-    >
+    <Sidebar className="border-r shadow-sm">
       <SidebarHeader className="border-b py-4">
         <div className="flex items-center gap-2 px-4">
           <Building className="h-6 w-6 text-primary" />
