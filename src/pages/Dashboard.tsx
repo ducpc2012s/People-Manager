@@ -1,598 +1,530 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/layout/page-layout";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  BarChart,
+  Calendar,
+  ChevronDown,
+  CreditCard,
+  Gauge,
+  LineChart,
+  ListChecks,
+  Loader2,
+  PieChart,
+  Plus,
+  Receipt,
+  Settings,
+  ShoppingBag,
+  SlidersHorizontal,
+  TrendingUp,
+  User,
+  User2,
+  Users,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Link } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Users,
-  Briefcase,
-  Building,
-  Bell,
-  FileText,
-  BarChart3,
-  Settings,
-  AlertTriangle,
-  CheckCircle2,
-  AlertOctagon,
-  ArrowUpRight,
-  Calendar,
-  ClipboardCheck,
-  Zap,
-  UserCheck,
-  Activity,
-  PieChart,
-  TimerReset,
-  Clock,
-} from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle, Bell } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+
+// Mock data for dashboard statistics
+const statisticsData = [
+  {
+    id: 1,
+    title: "Tổng số nhân viên",
+    value: "150",
+    icon: Users,
+    color: "emerald",
+    trend: "+20%",
+  },
+  {
+    id: 2,
+    title: "Dự án đang thực hiện",
+    value: "12",
+    icon: ListChecks,
+    color: "blue",
+    trend: "+5%",
+  },
+  {
+    id: 3,
+    title: "Tổng số giờ làm việc",
+    value: "2,500",
+    icon: Gauge,
+    color: "violet",
+    trend: "-3%",
+  },
+  {
+    id: 4,
+    title: "Doanh thu dự kiến",
+    value: "5 tỷ",
+    icon: TrendingUp,
+    color: "orange",
+    trend: "+15%",
+  },
+];
+
+// Mock data for recent activities
+const recentActivitiesData = [
+  {
+    id: 1,
+    user: "Nguyễn Văn A",
+    activity: "đã tạo dự án mới",
+    project: "Thiết kế nội thất văn phòng",
+    time: "5 phút trước",
+  },
+  {
+    id: 2,
+    user: "Trần Thị B",
+    activity: "đã cập nhật tiến độ dự án",
+    project: "Xây dựng nhà máy sản xuất",
+    time: "15 phút trước",
+  },
+  {
+    id: 3,
+    user: "Lê Văn C",
+    activity: "đã hoàn thành công việc",
+    project: "Thiết kế cảnh quan khu đô thị",
+    time: "30 phút trước",
+  },
+  {
+    id: 4,
+    user: "Phạm Thị D",
+    activity: "đã giao việc cho",
+    project: "Thiết kế nội thất căn hộ mẫu",
+    time: "1 giờ trước",
+    assignedTo: "Nguyễn Văn A",
+  },
+  {
+    id: 5,
+    user: "Hoàng Văn E",
+    activity: "đã tải lên tài liệu",
+    project: "Xây dựng cầu vượt",
+    time: "2 giờ trước",
+  },
+];
+
+// Mock data for project progress
+const projectProgressData = [
+  {
+    id: 1,
+    name: "Thiết kế nội thất văn phòng",
+    progress: 60,
+    status: "Đang thực hiện",
+    dueDate: "30/12/2023",
+  },
+  {
+    id: 2,
+    name: "Xây dựng nhà máy sản xuất",
+    progress: 35,
+    status: "Đang thực hiện",
+    dueDate: "15/01/2024",
+  },
+  {
+    id: 3,
+    name: "Thiết kế cảnh quan khu đô thị",
+    progress: 85,
+    status: "Hoàn thành",
+    dueDate: "10/12/2023",
+  },
+  {
+    id: 4,
+    name: "Thiết kế nội thất căn hộ mẫu",
+    progress: 20,
+    status: "Đang thực hiện",
+    dueDate: "25/12/2023",
+  },
+  {
+    id: 5,
+    name: "Xây dựng cầu vượt",
+    progress: 75,
+    status: "Đang thực hiện",
+    dueDate: "05/01/2024",
+  },
+];
+
+// Mock data for employee attendance
+const employeeAttendanceData = [
+  {
+    id: 1,
+    name: "Nguyễn Văn A",
+    position: "Kiến trúc sư",
+    status: "Có mặt",
+    checkIn: "08:00",
+    checkOut: "17:00",
+  },
+  {
+    id: 2,
+    name: "Trần Thị B",
+    position: "Kỹ sư xây dựng",
+    status: "Có mặt",
+    checkIn: "08:30",
+    checkOut: "17:30",
+  },
+  {
+    id: 3,
+    name: "Lê Văn C",
+    position: "Nhân viên thiết kế",
+    status: "Vắng mặt",
+    checkIn: "Không có",
+    checkOut: "Không có",
+  },
+  {
+    id: 4,
+    name: "Phạm Thị D",
+    position: "Nhân viên kinh doanh",
+    status: "Có mặt",
+    checkIn: "09:00",
+    checkOut: "18:00",
+  },
+  {
+    id: 5,
+    name: "Hoàng Văn E",
+    position: "Nhân viên kế toán",
+    status: "Có mặt",
+    checkIn: "08:15",
+    checkOut: "17:15",
+  },
+];
+
+// Mock data for notifications
+const notificationsData = [
+  {
+    id: 1,
+    message: "Bạn có một cuộc họp vào lúc 10:00",
+    time: "5 phút trước",
+  },
+  {
+    id: 2,
+    message: "Dự án Thiết kế nội thất văn phòng đã được cập nhật",
+    time: "15 phút trước",
+  },
+  {
+    id: 3,
+    message: "Bạn có một công việc mới được giao",
+    time: "30 phút trước",
+  },
+  {
+    id: 4,
+    message: "Nhân viên Nguyễn Văn A đã đăng ký nghỉ phép",
+    time: "1 giờ trước",
+  },
+  {
+    id: 5,
+    message: "Hệ thống đã được cập nhật phiên bản mới",
+    time: "2 giờ trước",
+  },
+];
+
+// Mock data for alerts
+const alertsData = [
+  {
+    id: 1,
+    type: "destructive",
+    message: "Hệ thống đang gặp sự cố, vui lòng kiểm tra lại",
+    time: "5 phút trước",
+  },
+  {
+    id: 2,
+    type: "warning",
+    message: "Dự án Thiết kế nội thất văn phòng sắp đến hạn",
+    time: "15 phút trước",
+  },
+  {
+    id: 3,
+    type: "success",
+    message: "Bạn đã hoàn thành công việc Thiết kế cảnh quan khu đô thị",
+    time: "30 phút trước",
+  },
+];
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const { toast } = useToast();
 
-  // Mock data for system status
-  const systemStatus = {
-    online: true,
-    lastUpdated: "15 phút trước",
-    serverLoad: 32,
-    memoryUsage: 48,
-    activeUsers: 18,
-    version: "1.2.3",
-    alerts: [
-      {
-        type: "destructive", // Đã sửa từ "warning" thành "destructive"
-        message: "Cập nhật phiên bản mới có sẵn",
-        time: "2 giờ trước",
-      },
-      {
-        type: "default",
-        message: "Sao lưu dữ liệu tự động hoàn tất",
-        time: "6 giờ trước",
-      },
-    ],
-  };
-
-  // Mock data for modules overview
-  const modulesOverview = [
-    {
-      name: "Quản lý nhân viên",
-      path: "/employees",
-      status: "active",
-      usageLevel: "high",
-      updates: 2,
-      icon: Users,
-      color: "text-blue-500",
+  const { data: users, isLoading, error } = useQuery({
+    queryKey: ["users"],
+    queryFn: async () => {
+      // Simulate an API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return [
+        { id: 1, name: "John Doe" },
+        { id: 2, name: "Jane Smith" },
+      ];
     },
-    {
-      name: "Chấm công",
-      path: "/attendance",
-      status: "active",
-      usageLevel: "high",
-      updates: 0,
-      icon: ClipboardCheck,
-      color: "text-emerald-500",
-    },
-    {
-      name: "Ngày nghỉ",
-      path: "/leave",
-      status: "active",
-      usageLevel: "medium",
-      updates: 5,
-      icon: Calendar,
-      color: "text-amber-500",
-    },
-    {
-      name: "Quản lý dự án",
-      path: "/projects",
-      status: "active",
-      usageLevel: "high",
-      updates: 1,
-      icon: Briefcase,
-      color: "text-purple-500",
-    },
-    {
-      name: "Quản lý công trình",
-      path: "/constructions",
-      status: "active",
-      usageLevel: "medium",
-      updates: 0,
-      icon: Building,
-      color: "text-indigo-500",
-    },
-    {
-      name: "Báo cáo",
-      path: "/reports",
-      status: "active",
-      usageLevel: "low",
-      updates: 0,
-      icon: BarChart3,
-      color: "text-rose-500",
-    },
-    {
-      name: "Quản lý người dùng",
-      path: "/user-management",
-      status: "active",
-      usageLevel: "medium",
-      updates: 0,
-      icon: Users,
-      color: "text-orange-500",
-    },
-    {
-      name: "Hồ sơ năng lực",
-      path: "/portfolio",
-      status: "active",
-      usageLevel: "low",
-      updates: 0,
-      icon: FileText,
-      color: "text-cyan-500",
-    },
-  ];
-
-  // Stats
-  const systemStats = [
-    {
-      title: "Tổng người dùng",
-      value: "42",
-      change: "+5%",
-      up: true,
-      icon: UserCheck,
-      color: "text-blue-500",
-    },
-    {
-      title: "Thời gian hoạt động",
-      value: "99.8%",
-      change: "-0.1%",
-      up: false,
-      icon: TimerReset,
-      color: "text-emerald-500",
-    },
-    {
-      title: "Số lượng truy cập",
-      value: "1,286",
-      change: "+12%",
-      up: true,
-      icon: Activity,
-      color: "text-amber-500",
-    },
-    {
-      title: "Lượt hoạt động",
-      value: "5,842",
-      change: "+8%",
-      up: true,
-      icon: PieChart,
-      color: "text-purple-500",
-    },
-  ];
-
-  // Recent activities
-  const recentActivities = [
-    {
-      user: "Admin",
-      action: "đã tạo người dùng mới",
-      target: "Nguyễn Thành",
-      time: "15 phút trước",
-    },
-    {
-      user: "Trần Thị B",
-      action: "đã cập nhật dự án",
-      target: "Khu nhà phố Riverside",
-      time: "1 giờ trước",
-    },
-    {
-      user: "Lê Văn C",
-      action: "đã gửi đơn nghỉ phép",
-      target: "3 ngày (15/04 - 17/04)",
-      time: "2 giờ trước",
-    },
-    {
-      user: "Admin",
-      action: "đã cập nhật quyền hạn",
-      target: "vai trò Quản lý",
-      time: "3 giờ trước",
-    },
-    {
-      user: "Hoàng Văn E",
-      action: "đã tạo báo cáo mới",
-      target: "Báo cáo tháng 3/2024",
-      time: "6 giờ trước",
-    },
-  ];
+  });
 
   return (
     <PageLayout>
       <PageHeader
-        title="Bảng điều khiển quản trị"
-        subtitle="Quản lý tổng quan hệ thống ArchiPeople"
+        title="Tổng quan"
+        subtitle="Theo dõi hoạt động và hiệu suất làm việc của bạn"
+        actions={
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-[300px] justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? (
+                    date?.toLocaleDateString()
+                  ) : (
+                    <span>Chọn ngày làm việc</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  disabled={(date) =>
+                    date > new Date() || date < new Date("2023-01-01")
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Thêm nhanh
+            </Button>
+          </div>
+        }
       />
 
-      <div className="mb-6 animate-slide-in">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="overview" className="flex items-center gap-1">
-              <Activity className="h-4 w-4 mr-1" />
-              Tổng quan
-            </TabsTrigger>
-            <TabsTrigger value="modules" className="flex items-center gap-1">
-              <Zap className="h-4 w-4 mr-1" />
-              Các module
-            </TabsTrigger>
-            <TabsTrigger value="system" className="flex items-center gap-1">
-              <Settings className="h-4 w-4 mr-1" />
-              Hệ thống
-            </TabsTrigger>
-          </TabsList>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statisticsData.map((item) => (
+          <Card key={item.id} className="shadow-sm animate-slide-in">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{item.title}</CardTitle>
+              <item.icon className={`h-4 w-4 text-${item.color}-500`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{item.value}</div>
+              <p className="text-xs text-muted-foreground">
+                <TrendingUp className="h-4 w-4 mr-1 inline-block" />
+                {item.trend}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {systemStats.map((stat, index) => (
-                <Card key={index} className="shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                        <p className="text-3xl font-bold">{stat.value}</p>
-                        <p className={`text-sm mt-1 ${stat.up ? "text-emerald-500" : "text-rose-500"}`}>
-                          {stat.change} {stat.up ? "↑" : "↓"}
-                        </p>
-                      </div>
-                      <div className={`rounded-full p-3 bg-muted ${stat.color}`}>
-                        <stat.icon className="h-6 w-6" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+        <Card className="shadow-sm animate-slide-in">
+          <CardHeader>
+            <CardTitle>Tiến độ dự án</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Dự án</TableHead>
+                  <TableHead>Tiến độ</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {projectProgressData.map((project) => (
+                  <TableRow key={project.id}>
+                    <TableCell>{project.name}</TableCell>
+                    <TableCell>
+                      <Progress value={project.progress} />
+                      <span className="text-xs text-muted-foreground">
+                        {project.progress}%
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{project.status}</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm animate-slide-in">
+          <CardHeader>
+            <CardTitle>Điểm danh nhân viên</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nhân viên</TableHead>
+                  <TableHead>Vị trí</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {employeeAttendanceData.map((employee) => (
+                  <TableRow key={employee.id}>
+                    <TableCell>{employee.name}</TableCell>
+                    <TableCell>{employee.position}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{employee.status}</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm animate-slide-in">
+          <CardHeader>
+            <CardTitle>Hoạt động gần đây</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-none p-0">
+              {recentActivitiesData.map((activity) => (
+                <li key={activity.id} className="py-2 border-b last:border-none">
+                  <span className="font-medium">{activity.user}</span>{" "}
+                  {activity.activity}{" "}
+                  <span className="font-medium">{activity.project}</span>
+                  {activity.assignedTo && (
+                    <>
+                      {" "}
+                      cho <span className="font-medium">{activity.assignedTo}</span>
+                    </>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {activity.time}
+                  </p>
+                </li>
               ))}
-            </div>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center">
-                    <Bell className="h-5 w-5 mr-2" />
-                    Hoạt động gần đây
-                  </CardTitle>
-                  <CardDescription>
-                    Các thao tác được thực hiện trên hệ thống
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentActivities.map((activity, index) => (
-                      <div
-                        key={index}
-                        className="flex items-start gap-2 pb-3 border-b last:border-0 last:pb-0"
-                      >
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-primary">
-                          {activity.user.split(" ").map((n) => n[0]).join("")}
-                        </div>
-                        <div className="flex-1 text-sm">
-                          <p>
-                            <span className="font-medium">{activity.user}</span>{" "}
-                            {activity.action}{" "}
-                            <span className="font-medium">{activity.target}</span>
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {activity.time}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full mt-4">
-                    Xem tất cả hoạt động
-                  </Button>
-                </CardContent>
-              </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+        <Card className="shadow-sm animate-slide-in">
+          <CardHeader>
+            <CardTitle>Thông báo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-none p-0">
+              {notificationsData.map((notification) => (
+                <li key={notification.id} className="py-2 border-b last:border-none">
+                  {notification.message}
+                  <p className="text-xs text-muted-foreground">
+                    {notification.time}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
 
-              <Card className="shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center">
-                    <AlertOctagon className="h-5 w-5 mr-2" />
-                    Thông báo hệ thống
-                  </CardTitle>
-                  <CardDescription>
-                    Cảnh báo và thông báo từ hệ thống
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <Alert variant="destructive" className="bg-amber-50 dark:bg-amber-900/20">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Cập nhật hệ thống</AlertTitle>
-                      <AlertDescription>
-                        Phiên bản mới 1.3.0 đã sẵn sàng để cập nhật. Dự kiến: 20/04/2024
-                      </AlertDescription>
-                    </Alert>
-                    <Alert variant="default" className="bg-blue-50 dark:bg-blue-900/20">
-                      <Bell className="h-4 w-4" />
-                      <AlertTitle>Bảo trì định kỳ</AlertTitle>
-                      <AlertDescription>
-                        Hệ thống sẽ bảo trì từ 22:00 - 24:00 ngày 18/04/2024
-                      </AlertDescription>
-                    </Alert>
-                    <Alert variant="default" className="bg-emerald-50 dark:bg-emerald-900/20">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <AlertTitle>Sao lưu dữ liệu hoàn tất</AlertTitle>
-                      <AlertDescription>
-                        Sao lưu tự động dữ liệu hệ thống đã hoàn tất lúc 03:00 AM
-                      </AlertDescription>
-                    </Alert>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full mt-4">
-                    Quản lý thông báo
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="modules" className="space-y-6">
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Zap className="h-5 w-5 mr-2" />
-                  Modules hệ thống
-                </CardTitle>
-                <CardDescription>
-                  Quản lý các module chức năng của hệ thống
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {modulesOverview.map((module, index) => (
-                    <Card
-                      key={index}
-                      className="overflow-hidden hover:shadow-md transition-shadow"
-                    >
-                      <CardHeader className="p-4 pb-3 bg-muted/50">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center">
-                            <div className={`rounded-full p-1.5 mr-2 ${module.color}`}>
-                              <module.icon className="h-5 w-5" />
-                            </div>
-                            <CardTitle className="text-base">{module.name}</CardTitle>
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className={`${
-                              module.status === "active"
-                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200"
-                                : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
-                            }`}
-                          >
-                            {module.status === "active" ? "Hoạt động" : "Bảo trì"}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-3">
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Mức độ sử dụng:</span>
-                            <span className="font-medium">
-                              {module.usageLevel === "high"
-                                ? "Cao"
-                                : module.usageLevel === "medium"
-                                ? "Trung bình"
-                                : "Thấp"}
-                            </span>
-                          </div>
-                          <Progress
-                            value={
-                              module.usageLevel === "high"
-                                ? 80
-                                : module.usageLevel === "medium"
-                                ? 50
-                                : 20
-                            }
-                            className="h-1.5"
-                          />
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Cập nhật mới:</span>
-                            {module.updates > 0 ? (
-                              <Badge variant="default" className="px-1.5 py-0 h-5 text-[10px]">
-                                {module.updates}
-                              </Badge>
-                            ) : (
-                              <span>Không có</span>
-                            )}
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full mt-2"
-                            asChild
-                          >
-                            <Link to={module.path} className="flex items-center justify-center">
-                              <span>Quản lý</span>
-                              <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="system" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                <Card className="shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <Settings className="h-5 w-5 mr-2" />
-                      Thông tin hệ thống
-                    </CardTitle>
-                    <CardDescription>
-                      Trạng thái và thông tin hoạt động hệ thống
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Trạng thái:</span>
-                        <Badge
-                          variant="outline"
-                          className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200"
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                          Hoạt động
-                        </Badge>
-                      </div>
-                      <Separator />
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Phiên bản:</span>
-                        <span className="font-medium">{systemStatus.version}</span>
-                      </div>
-                      <Separator />
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Cập nhật gần nhất:</span>
-                        <span>{systemStatus.lastUpdated}</span>
-                      </div>
-                      <Separator />
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Người dùng đang hoạt động:</span>
-                        <span className="font-medium">{systemStatus.activeUsers}</span>
-                      </div>
-                      <Separator />
-                      <div className="space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Tải CPU:</span>
-                          <span className="font-medium">{systemStatus.serverLoad}%</span>
-                        </div>
-                        <Progress value={systemStatus.serverLoad} className="h-1.5" />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Bộ nhớ sử dụng:</span>
-                          <span className="font-medium">{systemStatus.memoryUsage}%</span>
-                        </div>
-                        <Progress value={systemStatus.memoryUsage} className="h-1.5" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <Clock className="h-5 w-5 mr-2" />
-                      Lịch bảo trì và nâng cấp
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-start border-l-2 border-primary pl-3 py-1">
-                        <div>
-                          <p className="font-medium text-sm">Bảo trì định kỳ hệ thống</p>
-                          <div className="flex items-center text-xs text-muted-foreground mt-1">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            18/04/2024 (22:00 - 24:00)
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-start border-l-2 border-blue-500 pl-3 py-1">
-                        <div>
-                          <p className="font-medium text-sm">Nâng cấp lên phiên bản 1.3.0</p>
-                          <div className="flex items-center text-xs text-muted-foreground mt-1">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            20/04/2024 (20:00 - 22:00)
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-start border-l-2 border-amber-500 pl-3 py-1">
-                        <div>
-                          <p className="font-medium text-sm">Sao lưu dữ liệu toàn bộ hệ thống</p>
-                          <div className="flex items-center text-xs text-muted-foreground mt-1">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            01/05/2024 (03:00 - 05:00)
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="space-y-6">
-                <Card className="shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <AlertTriangle className="h-5 w-5 mr-2" />
-                      Cảnh báo hệ thống
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {systemStatus.alerts.map((alert, index) => (
-                        <Alert
-                          key={index}
-                          variant={alert.type}
-                          className={
-                            alert.type === "destructive"
-                              ? "bg-amber-50 dark:bg-amber-900/20"
-                              : "bg-blue-50 dark:bg-blue-900/20"
-                          }
-                        >
-                          {alert.type === "destructive" ? (
-                            <AlertTriangle className="h-4 w-4" />
-                          ) : (
-                            <Bell className="h-4 w-4" />
-                          )}
-                          <AlertDescription className="flex flex-col">
-                            <span>{alert.message}</span>
-                            <span className="text-xs text-muted-foreground mt-1">
-                              {alert.time}
-                            </span>
-                          </AlertDescription>
-                        </Alert>
-                      ))}
-                    </div>
-                    <Button variant="outline" size="sm" className="w-full mt-4">
-                      Xem tất cả cảnh báo
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <Settings className="h-5 w-5 mr-2" />
-                      Thao tác nhanh
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <Button variant="outline" className="w-full justify-start">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Sao lưu dữ liệu
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start">
-                        <Users className="h-4 w-4 mr-2" />
-                        Quản lý người dùng
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start">
-                        <Settings className="h-4 w-4 mr-2" />
-                        Cài đặt hệ thống
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start">
-                        <BarChart3 className="h-4 w-4 mr-2" />
-                        Báo cáo hệ thống
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+        <Card className="shadow-sm animate-slide-in">
+          <CardHeader>
+            <CardTitle>Cảnh báo</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {alertsData.map((alert) => (
+              <Alert variant="destructive" className="bg-amber-50 dark:bg-amber-900/20">
+                {alert.type === "destructive" ? (
+                  <AlertTriangle className="h-4 w-4" />
+                ) : (
+                  <Bell className="h-4 w-4" />
+                )}
+                <AlertDescription className="flex flex-col">
+                  <span>{alert.message}</span>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    {alert.time}
+                  </span>
+                </AlertDescription>
+              </Alert>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     </PageLayout>
   );

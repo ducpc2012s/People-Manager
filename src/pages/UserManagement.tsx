@@ -119,7 +119,7 @@ const UserManagement = () => {
     password: "",
     role_id: 0,
     department_id: 0,
-    status: "active" as const,
+    status: "active" as "active" | "inactive", // Chỉ định rõ kiểu dữ liệu
   });
 
   const [newRole, setNewRole] = useState({
@@ -150,7 +150,7 @@ const UserManagement = () => {
     queryFn: fetchRoles,
   });
 
-  // Selected role with permissions
+  // Selected role with permissions - sửa đổi cách xử lý onSuccess
   const {
     data: selectedRoleData,
     isLoading: selectedRoleLoading,
@@ -159,16 +159,20 @@ const UserManagement = () => {
     queryKey: ["role", selectedRoleId],
     queryFn: () => fetchRoleWithPermissions(selectedRoleId!),
     enabled: !!selectedRoleId,
-    onSuccess: (data) => {
+  });
+
+  // Xử lý useEffect thay cho onSuccess
+  useEffect(() => {
+    if (selectedRoleData) {
       setNewRole({
-        name: data.role.name,
-        description: data.role.description || "",
+        name: selectedRoleData.role.name,
+        description: selectedRoleData.role.description || "",
       });
 
       // Initialize permissions
       const permissionsMap: Record<string, { can_view: boolean; can_create: boolean; can_edit: boolean; can_delete: boolean }> = {};
       modulesData.forEach(module => {
-        const existingPermission = data.permissions.find(p => p.module === module.id);
+        const existingPermission = selectedRoleData.permissions.find(p => p.module === module.id);
         permissionsMap[module.id] = {
           can_view: existingPermission?.can_view || false,
           can_create: existingPermission?.can_create || false,
@@ -177,8 +181,8 @@ const UserManagement = () => {
         };
       });
       setModulePermissions(permissionsMap);
-    },
-  });
+    }
+  }, [selectedRoleData]);
 
   // Mutations
   const createUserMutation = useMutation({
