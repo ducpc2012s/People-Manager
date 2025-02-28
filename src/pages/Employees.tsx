@@ -363,7 +363,7 @@ const Employees = () => {
                     <Badge
                       variant={
                         employee.status === "Đang làm việc"
-                          ? "default"
+                          ? "success"
                           : "secondary"
                       }
                       className={

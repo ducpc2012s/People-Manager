@@ -49,7 +49,7 @@ export function MainSidebar() {
   return (
     <Sidebar
       className="border-r shadow-sm"
-      data-state={collapsed ? "collapsed" : "expanded"}
+      defaultCollapsed={collapsed}
       onCollapsedChange={setCollapsed}
     >
       <SidebarHeader className="border-b py-4">

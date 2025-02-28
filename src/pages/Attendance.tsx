@@ -385,7 +385,7 @@ const Attendance = () => {
                       <Badge
                         variant={
                           record.status === "Đúng giờ"
-                            ? "default"
+                            ? "success"
                             : record.status === "Đi trễ" ||
                               record.status === "Về sớm"
                             ? "outline"
