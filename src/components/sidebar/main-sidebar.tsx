@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -33,9 +34,10 @@ import { ModeToggle } from "../mode-toggle";
 export function MainSidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const { userDetails, signOut } = useAuth();
 
   const menuItems = [
-    { icon: LayoutDashboard, label: "Tổng quan", path: "/dashboard" }, // Thêm mục Dashboard
+    { icon: LayoutDashboard, label: "Tổng quan", path: "/dashboard" },
     { icon: Users, label: "Nhân viên", path: "/employees" },
     { icon: ClipboardCheck, label: "Chấm công", path: "/attendance" },
     { icon: Calendar, label: "Ngày nghỉ", path: "/leave" },
@@ -48,6 +50,10 @@ export function MainSidebar() {
     { icon: UserCog, label: "Người dùng", path: "/user-management" },
     { icon: Settings, label: "Cài đặt", path: "/settings" },
   ];
+
+  const handleSignOut = () => {
+    signOut();
+  };
 
   return (
     <Sidebar className="border-r shadow-sm">
@@ -85,28 +91,32 @@ export function MainSidebar() {
           {!collapsed && (
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg" />
-                <AvatarFallback>AD</AvatarFallback>
+                <AvatarImage src={userDetails?.avatar_url || ""} />
+                <AvatarFallback>
+                  {userDetails?.full_name
+                    ?.split(" ")
+                    .map((n) => n[0])
+                    .join("") || "U"}
+                </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="text-sm font-medium">Admin</span>
+                <span className="text-sm font-medium">{userDetails?.full_name || "Người dùng"}</span>
                 <span className="text-xs text-muted-foreground">
-                  admin@archipeople.com
+                  {userDetails?.email || ""}
                 </span>
               </div>
             </div>
           )}
           <div className="flex items-center justify-between">
             <ModeToggle />
-            {!collapsed && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </SidebarFooter>
