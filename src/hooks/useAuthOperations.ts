@@ -1,66 +1,18 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User as SupabaseUser } from '@supabase/supabase-js';
+
+import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase, User, Role, Department } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
-type AuthContextType = {
-  session: Session | null;
-  user: SupabaseUser | null;
-  userDetails: (User & { role?: Role; department?: Department }) | null;
-  loading: boolean;
+export interface AuthOperationsResult {
+  fetchUserDetails: (userId: string) => Promise<(User & { role?: Role; department?: Department }) | null>;
+  refreshUserDetails: (userId: string) => Promise<(User & { role?: Role; department?: Department }) | null>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  refreshUserDetails: () => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ user: SupabaseUser | null; error: Error | null }>;
-};
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [userDetails, setUserDetails] = useState<(User & { role?: Role; department?: Department }) | null>(null);
-  const [loading, setLoading] = useState(true);
+export const useAuthOperations = (): AuthOperationsResult => {
   const { toast } = useToast();
-
-  useEffect(() => {
-    const getSession = async () => {
-      setLoading(true);
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error getting session:', error);
-        setLoading(false);
-        return;
-      }
-      
-      if (session) {
-        setSession(session);
-        setUser(session.user);
-        await fetchUserDetails(session.user.id);
-      }
-      
-      setLoading(false);
-    };
-
-    getSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchUserDetails(session.user.id);
-        } else {
-          setUserDetails(null);
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
 
   const fetchUserDetails = async (userId: string) => {
     try {
@@ -79,26 +31,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data) {
-        setUserDetails({
+        return {
           ...data,
           role: data.roles,
           department: data.departments
-        });
+        };
       }
+      
+      return null;
     } catch (error) {
       console.error('Error fetching user details:', error);
+      return null;
     }
   };
 
-  const refreshUserDetails = async () => {
-    if (user) {
-      await fetchUserDetails(user.id);
-    }
+  const refreshUserDetails = async (userId: string) => {
+    return await fetchUserDetails(userId);
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
@@ -117,15 +69,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error('Error signing in:', error);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      setLoading(true);
-      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -133,8 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           data: {
             full_name: fullName
           },
-          emailRedirectTo: window.location.origin,
-          emailConfirm: true
+          emailRedirectTo: window.location.origin
         }
       });
       
@@ -176,53 +123,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         variant: "destructive",
       });
       return { user: null, error };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         throw error;
       }
       
-      setUserDetails(null);
       toast({
         title: "Đăng xuất thành công",
       });
     } catch (error) {
       console.error('Error signing out:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  return (
-    <AuthContext.Provider value={{ 
-      session, 
-      user, 
-      userDetails, 
-      loading, 
-      signIn, 
-      signOut, 
-      refreshUserDetails,
-      signUp
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  
-  return context;
+  return {
+    fetchUserDetails,
+    refreshUserDetails,
+    signIn,
+    signOut,
+    signUp
+  };
 };
