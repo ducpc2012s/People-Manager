@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase, User, Role, Department } from '@/lib/supabase';
@@ -65,7 +64,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUserDetails = async (userId: string) => {
     try {
-      // Fetch user details and join with role and department
       const { data, error } = await supabase
         .from('users')
         .select(`
@@ -128,10 +126,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       
-      // Đăng ký tài khoản với Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName
+          },
+          emailRedirectTo: window.location.origin,
+          emailConfirm: true
+        }
       });
       
       if (error) {
@@ -139,20 +143,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (data.user) {
-        // Tạo thông tin người dùng trong bảng users
         const { error: profileError } = await supabase
           .from('users')
           .insert({
             id: data.user.id,
             email: email,
             full_name: fullName,
-            role_id: 3, // Mặc định là nhân viên
-            department_id: 2, // Mặc định là phòng thiết kế
+            role_id: 3,
+            department_id: 2,
             status: 'active'
           });
           
         if (profileError) {
-          // Nếu có lỗi khi tạo profile, xóa tài khoản auth đã tạo
           console.error('Error creating user profile:', profileError);
           return { user: null, error: profileError };
         }
