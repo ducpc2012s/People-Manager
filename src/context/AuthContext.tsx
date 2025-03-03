@@ -12,6 +12,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUserDetails: () => Promise<void>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ user: SupabaseUser | null; error: Error | null }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -117,6 +118,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
     } catch (error) {
       console.error('Error signing in:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signUp = async (email: string, password: string, fullName: string) => {
+    try {
+      setLoading(true);
+      
+      // Đăng ký tài khoản với Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data.user) {
+        // Tạo thông tin người dùng trong bảng users
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert({
+            id: data.user.id,
+            email: email,
+            full_name: fullName,
+            role_id: 3, // Mặc định là nhân viên
+            department_id: 2, // Mặc định là phòng thiết kế
+            status: 'active'
+          });
+          
+        if (profileError) {
+          // Nếu có lỗi khi tạo profile, xóa tài khoản auth đã tạo
+          console.error('Error creating user profile:', profileError);
+          return { user: null, error: profileError };
+        }
+        
+        toast({
+          title: "Đăng ký thành công",
+          description: "Tài khoản của bạn đã được tạo thành công",
+        });
+        
+        return { user: data.user, error: null };
+      }
+      
+      return { user: null, error: new Error('User registration failed') };
+    } catch (error: any) {
+      console.error('Error signing up:', error);
+      toast({
+        title: "Đăng ký thất bại",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { user: null, error };
     } finally {
       setLoading(false);
     }
@@ -143,7 +200,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, userDetails, loading, signIn, signOut, refreshUserDetails }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user, 
+      userDetails, 
+      loading, 
+      signIn, 
+      signOut, 
+      refreshUserDetails,
+      signUp
+    }}>
       {children}
     </AuthContext.Provider>
   );
