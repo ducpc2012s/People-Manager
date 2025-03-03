@@ -10,21 +10,24 @@ const initApp = async () => {
     // Kiểm tra kết nối Supabase
     const { error } = await supabase.from('roles').select('count', { count: 'exact', head: true });
     
-    if (error && !error.message.includes('JWT')) {
-      console.error('Lỗi kết nối Supabase:', error.message);
-      document.getElementById("root")!.innerHTML = `
-        <div style="text-align: center; padding: 2rem; font-family: system-ui, sans-serif;">
-          <h2>Không thể kết nối đến cơ sở dữ liệu</h2>
-          <p>Vui lòng kiểm tra cấu hình Supabase trong file .env</p>
-          <pre style="background: #f1f1f1; padding: 1rem; text-align: left; margin: 1rem auto; max-width: 500px; border-radius: 5px;">
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
-          </pre>
-          <p>Sau khi cập nhật cấu hình, làm mới trang để thử lại.</p>
-          <button onclick="location.reload()" style="padding: 0.5rem 1rem; background: #4f46e5; color: white; border: none; border-radius: 0.25rem; cursor: pointer;">Làm mới trang</button>
-        </div>
-      `;
-      return;
+    if (error) {
+      console.warn('Cảnh báo kết nối Supabase:', error.message);
+      
+      // Nếu lỗi không phải lỗi JWT, thì có thể là lỗi kết nối
+      if (!error.message.includes('JWT')) {
+        document.getElementById("root")!.innerHTML = `
+          <div style="text-align: center; padding: 2rem; font-family: system-ui, sans-serif;">
+            <h2>Đã kết nối đến Supabase nhưng có vấn đề với cơ sở dữ liệu</h2>
+            <p>Có thể là do bảng 'roles' chưa được tạo hoặc quyền truy cập chưa được cấu hình.</p>
+            <p>Lỗi: ${error.message}</p>
+            <button onclick="location.reload()" style="padding: 0.5rem 1rem; background: #4f46e5; color: white; border: none; border-radius: 0.25rem; cursor: pointer;">Làm mới trang</button>
+          </div>
+        `;
+        return;
+      }
+      
+      // Nếu là lỗi JWT, vẫn tiếp tục vì đây là lỗi phổ biến khi chưa đăng nhập
+      console.info("Lỗi JWT bình thường khi chưa đăng nhập, tiếp tục khởi chạy ứng dụng");
     }
 
     // Nếu kết nối thành công, render app

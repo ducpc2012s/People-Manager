@@ -1,13 +1,13 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-// Kiểm tra biến môi trường hoặc sử dụng giá trị mặc định để tránh lỗi
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-url.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+// Sử dụng thông tin thực của dự án Supabase
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ryhqmxcnirtzsgvmibnh.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5aHFteGNuaXJ0enNndm1pYm5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA5NzAxOTUsImV4cCI6MjA1NjU0NjE5NX0.EVgs5okBIfA3cPXzAz34JQg2pRPsDNZHx6MCukteJ10';
 
-// Tạo client Supabase với thông báo lỗi rõ ràng nếu thiếu thông tin
+// Kiểm tra và thông báo nếu không có biến môi trường
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.error("Thiếu thông tin kết nối Supabase. Vui lòng cung cấp VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY trong file .env");
+  console.warn("Không tìm thấy biến môi trường Supabase, đang sử dụng giá trị mặc định.");
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
