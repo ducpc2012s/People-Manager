@@ -33,7 +33,7 @@ export const useRealtimeData = (
           schema,
           table,
           filter,
-        },
+        } as any, // Use type assertion to bypass the TypeScript error
         (payload) => {
           console.log('Realtime change detected:', payload);
           // Invalidate query để React Query tự động fetch lại data
