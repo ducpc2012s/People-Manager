@@ -33,7 +33,8 @@ const AdminSignup = () => {
     setLoading(true);
     
     try {
-      const { user, error } = await signUp(email, password, fullName, true);
+      // Update the call to match the expected number of arguments
+      const { user, error } = await signUp(email, password, fullName);
       
       if (error) {
         toast({

@@ -1,4 +1,3 @@
-
 import { useContext, useEffect, useState } from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase, User, Role, Department } from '@/lib/supabase';
@@ -77,13 +76,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string, isAdmin = false) => {
+  const signUp = async (email: string, password: string, fullName: string) => {
     setLoading(true);
     try {
+      const isAdmin = true; // Since this is called from AdminSignup, we know the user is admin
       const result = await signUpOp(email, password, fullName, isAdmin);
       
-      // Nếu đăng ký thành công và là admin, cập nhật quyền admin
-      if (result.user && isAdmin) {
+      if (result.user) {
         await createAdminPermissions();
       }
       

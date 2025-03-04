@@ -1,4 +1,3 @@
-
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase, User, Role, Department } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -90,8 +89,8 @@ export const useAuthOperations = (): AuthOperationsResult => {
       }
       
       if (data.user) {
-        // Lấy role_id dựa vào isAdmin
-        const roleId = isAdmin ? 1 : 5; // 1 là Quản trị viên, 5 là Nhân viên
+        // Get role_id based on isAdmin
+        const roleId = isAdmin ? 1 : 5; // 1 is Administrator, 5 is Employee
         
         const { error: profileError } = await supabase
           .from('users')
@@ -100,7 +99,7 @@ export const useAuthOperations = (): AuthOperationsResult => {
             email: email,
             full_name: fullName,
             role_id: roleId,
-            department_id: isAdmin ? 1 : 2, // Admin thuộc Ban quản lý
+            department_id: isAdmin ? 1 : 2, // Admin belongs to Management department
             status: 'active'
           });
           

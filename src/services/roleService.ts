@@ -1,4 +1,3 @@
-
 import { supabase, Role, Permission } from '@/lib/supabase';
 
 export const fetchRoles = async (): Promise<Role[]> => {
@@ -63,7 +62,7 @@ export const isUserAdmin = async (userId: string): Promise<boolean> => {
     return false;
   }
 
-  return data?.roles?.name === 'Quản trị viên';
+  return data?.roles && 'name' in data.roles ? data.roles.name === 'Quản trị viên' : false;
 };
 
 export const createRole = async (roleData: Partial<Role>): Promise<Role> => {
@@ -96,7 +95,6 @@ export const updateRole = async (roleId: number, roleData: Partial<Role>): Promi
 };
 
 export const deleteRole = async (roleId: number): Promise<void> => {
-  // Xóa permissions trước
   const { error: permissionsError } = await supabase
     .from('permissions')
     .delete()
@@ -106,7 +104,6 @@ export const deleteRole = async (roleId: number): Promise<void> => {
     throw permissionsError;
   }
 
-  // Sau đó xóa role
   const { error } = await supabase
     .from('roles')
     .delete()
@@ -118,7 +115,6 @@ export const deleteRole = async (roleId: number): Promise<void> => {
 };
 
 export const setRolePermissions = async (roleId: number, permissions: Partial<Permission>[]): Promise<Permission[]> => {
-  // Xóa permissions hiện tại
   const { error: deleteError } = await supabase
     .from('permissions')
     .delete()
@@ -128,7 +124,6 @@ export const setRolePermissions = async (roleId: number, permissions: Partial<Pe
     throw deleteError;
   }
 
-  // Thêm permissions mới
   const permissionsWithRoleId = permissions.map(p => ({ ...p, role_id: roleId }));
   
   const { data, error } = await supabase
@@ -144,7 +139,6 @@ export const setRolePermissions = async (roleId: number, permissions: Partial<Pe
 };
 
 export const createAdminPermissions = async (): Promise<void> => {
-  // Tìm role admin
   const adminRole = await fetchRoleByName('Quản trị viên');
   
   if (!adminRole) {
@@ -152,13 +146,11 @@ export const createAdminPermissions = async (): Promise<void> => {
     return;
   }
   
-  // Danh sách các module trong hệ thống
   const modules = [
     'dashboard', 'employees', 'attendance', 'leave', 'payroll', 'recruitment', 
     'projects', 'constructions', 'portfolio', 'reports', 'settings', 'users'
   ];
   
-  // Tạo permissions với đầy đủ quyền cho tất cả modules
   const adminPermissions = modules.map(module => ({
     role_id: adminRole.id,
     module,
@@ -168,7 +160,6 @@ export const createAdminPermissions = async (): Promise<void> => {
     can_delete: true
   }));
   
-  // Cập nhật permissions cho admin
   try {
     await setRolePermissions(adminRole.id, adminPermissions);
     console.log('Đã cập nhật quyền cho admin thành công');
@@ -177,14 +168,12 @@ export const createAdminPermissions = async (): Promise<void> => {
   }
 };
 
-// Hàm kiểm tra quyền truy cập của người dùng đối với một module cụ thể
 export const checkPermission = async (
   userId: string, 
   module: string, 
   action: 'view' | 'create' | 'edit' | 'delete'
 ): Promise<boolean> => {
   try {
-    // Lấy thông tin user kèm role
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('role_id')
@@ -196,7 +185,6 @@ export const checkPermission = async (
       return false;
     }
     
-    // Lấy permission tương ứng
     const { data: permission, error: permissionError } = await supabase
       .from('permissions')
       .select('*')
@@ -209,7 +197,6 @@ export const checkPermission = async (
       return false;
     }
     
-    // Kiểm tra quyền thực hiện hành động
     if (!permission) return false;
     
     switch (action) {
