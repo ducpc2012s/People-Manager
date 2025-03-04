@@ -1,157 +1,197 @@
+
 import { supabase, Role, Permission } from '@/lib/supabase';
 
-export const fetchRoles = async (): Promise<Role[]> => {
+export async function fetchRoles(): Promise<Role[]> {
   const { data, error } = await supabase
     .from('roles')
     .select('*')
     .order('id');
-
+    
   if (error) {
     throw error;
   }
-
+  
   return data || [];
-};
+}
 
-export const fetchRoleWithPermissions = async (roleId: number): Promise<{ role: Role, permissions: Permission[] }> => {
-  const { data: role, error: roleError } = await supabase
+export async function fetchRole(roleId: number): Promise<Role | null> {
+  const { data, error } = await supabase
     .from('roles')
     .select('*')
     .eq('id', roleId)
     .single();
-
-  if (roleError) {
-    throw roleError;
-  }
-
-  const { data: permissions, error: permissionsError } = await supabase
-    .from('permissions')
-    .select('*')
-    .eq('role_id', roleId);
-
-  if (permissionsError) {
-    throw permissionsError;
-  }
-
-  return { role, permissions: permissions || [] };
-};
-
-export const fetchRoleByName = async (roleName: string): Promise<Role | null> => {
-  const { data, error } = await supabase
-    .from('roles')
-    .select('*')
-    .eq('name', roleName)
-    .maybeSingle();
-
+    
   if (error) {
+    if (error.code === 'PGRST116') {
+      return null;
+    }
     throw error;
   }
-
+  
   return data;
-};
+}
 
-export const isUserAdmin = async (userId: string): Promise<boolean> => {
-  const { data, error } = await supabase
-    .from('users')
-    .select('roles:role_id(*)')
-    .eq('id', userId)
-    .single();
-
-  if (error) {
-    console.error('Error checking admin status:', error);
-    return false;
-  }
-
-  return data?.roles && 'name' in data.roles ? data.roles.name === 'Quản trị viên' : false;
-};
-
-export const createRole = async (roleData: Partial<Role>): Promise<Role> => {
+export async function createRole(roleData: Partial<Role>): Promise<Role> {
   const { data, error } = await supabase
     .from('roles')
     .insert(roleData)
     .select()
     .single();
-
+    
   if (error) {
     throw error;
   }
-
+  
   return data;
-};
+}
 
-export const updateRole = async (roleId: number, roleData: Partial<Role>): Promise<Role> => {
+export async function updateRole(roleId: number, roleData: Partial<Role>): Promise<Role> {
   const { data, error } = await supabase
     .from('roles')
     .update(roleData)
     .eq('id', roleId)
     .select()
     .single();
-
+    
   if (error) {
     throw error;
   }
-
+  
   return data;
-};
+}
 
-export const deleteRole = async (roleId: number): Promise<void> => {
-  const { error: permissionsError } = await supabase
+export async function deleteRole(roleId: number): Promise<void> {
+  // Xóa tất cả quyền của vai trò trước
+  const { error: permissionError } = await supabase
     .from('permissions')
     .delete()
     .eq('role_id', roleId);
-
-  if (permissionsError) {
-    throw permissionsError;
+  
+  if (permissionError) {
+    throw permissionError;
   }
-
+  
+  // Sau đó xóa vai trò
   const { error } = await supabase
     .from('roles')
     .delete()
     .eq('id', roleId);
-
+  
   if (error) {
     throw error;
   }
-};
+}
 
-export const setRolePermissions = async (roleId: number, permissions: Partial<Permission>[]): Promise<Permission[]> => {
-  const { error: deleteError } = await supabase
-    .from('permissions')
-    .delete()
-    .eq('role_id', roleId);
-
-  if (deleteError) {
-    throw deleteError;
+export async function isUserAdmin(userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('roles:role_id(*)')
+    .eq('id', userId)
+    .single();
+    
+  if (error) {
+    console.error('Lỗi khi kiểm tra quyền admin:', error);
+    return false;
   }
-
-  const permissionsWithRoleId = permissions.map(p => ({ ...p, role_id: roleId }));
   
+  // Kiểm tra xem data và data.roles có tồn tại và nó có phải là một đối tượng với thuộc tính name
+  return data && data.roles && typeof data.roles === 'object' && data.roles.name === 'Quản trị viên';
+}
+
+export async function checkPermission(
+  userId: string, 
+  module: string, 
+  action: 'view' | 'create' | 'edit' | 'delete'
+): Promise<boolean> {
+  // Đầu tiên kiểm tra xem người dùng có phải admin không
+  const isAdmin = await isUserAdmin(userId);
+  if (isAdmin) {
+    return true; // Admin có tất cả các quyền
+  }
+  
+  // Nếu không phải admin, kiểm tra quyền cụ thể
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('role_id')
+    .eq('id', userId)
+    .single();
+    
+  if (userError || !user) {
+    return false;
+  }
+  
+  const actionField = action === 'view' 
+    ? 'can_view' 
+    : action === 'create' 
+      ? 'can_create' 
+      : action === 'edit' 
+        ? 'can_edit' 
+        : 'can_delete';
+  
+  const { data: permission, error: permissionError } = await supabase
+    .from('permissions')
+    .select(actionField)
+    .eq('role_id', user.role_id)
+    .eq('module', module)
+    .single();
+    
+  if (permissionError || !permission) {
+    return false;
+  }
+  
+  return permission[actionField] === true;
+}
+
+export async function fetchPermissions(roleId: number): Promise<Permission[]> {
   const { data, error } = await supabase
     .from('permissions')
-    .insert(permissionsWithRoleId)
-    .select();
-
+    .select('*')
+    .eq('role_id', roleId);
+    
   if (error) {
     throw error;
   }
-
-  return data || [];
-};
-
-export const createAdminPermissions = async (): Promise<void> => {
-  const adminRole = await fetchRoleByName('Quản trị viên');
   
-  if (!adminRole) {
-    console.error('Không tìm thấy vai trò Quản trị viên');
+  return data || [];
+}
+
+export async function savePermissions(permissions: Partial<Permission>[]): Promise<void> {
+  // Dùng upsert để cập nhật hoặc tạo mới quyền
+  const { error } = await supabase
+    .from('permissions')
+    .upsert(permissions, { 
+      onConflict: 'role_id,module',
+      ignoreDuplicates: false
+    });
+    
+  if (error) {
+    throw error;
+  }
+}
+
+export async function createAdminPermissions(): Promise<void> {
+  const { data: adminRole, error: roleError } = await supabase
+    .from('roles')
+    .select('id')
+    .eq('name', 'Quản trị viên')
+    .single();
+  
+  if (roleError) {
+    console.error("Lỗi khi tìm vai trò admin:", roleError);
     return;
   }
   
   const modules = [
-    'dashboard', 'employees', 'attendance', 'leave', 'payroll', 'recruitment', 
-    'projects', 'constructions', 'portfolio', 'reports', 'settings', 'users'
+    'dashboard',
+    'employees',
+    'attendance',
+    'projects',
+    'reports',
+    'settings',
+    'user_management'
   ];
   
-  const adminPermissions = modules.map(module => ({
+  const permissions = modules.map(module => ({
     role_id: adminRole.id,
     module,
     can_view: true,
@@ -161,53 +201,9 @@ export const createAdminPermissions = async (): Promise<void> => {
   }));
   
   try {
-    await setRolePermissions(adminRole.id, adminPermissions);
-    console.log('Đã cập nhật quyền cho admin thành công');
+    await savePermissions(permissions);
+    console.log("Đã tạo quyền admin thành công");
   } catch (error) {
-    console.error('Lỗi khi cập nhật quyền cho admin:', error);
+    console.error("Lỗi khi tạo quyền admin:", error);
   }
-};
-
-export const checkPermission = async (
-  userId: string, 
-  module: string, 
-  action: 'view' | 'create' | 'edit' | 'delete'
-): Promise<boolean> => {
-  try {
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('role_id')
-      .eq('id', userId)
-      .single();
-    
-    if (userError || !user) {
-      console.error('Lỗi khi lấy thông tin người dùng:', userError);
-      return false;
-    }
-    
-    const { data: permission, error: permissionError } = await supabase
-      .from('permissions')
-      .select('*')
-      .eq('role_id', user.role_id)
-      .eq('module', module)
-      .maybeSingle();
-    
-    if (permissionError) {
-      console.error('Lỗi khi kiểm tra quyền:', permissionError);
-      return false;
-    }
-    
-    if (!permission) return false;
-    
-    switch (action) {
-      case 'view': return permission.can_view;
-      case 'create': return permission.can_create;
-      case 'edit': return permission.can_edit;
-      case 'delete': return permission.can_delete;
-      default: return false;
-    }
-  } catch (error) {
-    console.error('Lỗi khi kiểm tra quyền:', error);
-    return false;
-  }
-};
+}

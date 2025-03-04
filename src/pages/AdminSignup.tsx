@@ -33,7 +33,7 @@ const AdminSignup = () => {
     setLoading(true);
     
     try {
-      // Update the call to match the expected number of arguments
+      // Sửa: Chỉ truyền 3 tham số thay vì 4
       const { user, error } = await signUp(email, password, fullName);
       
       if (error) {
