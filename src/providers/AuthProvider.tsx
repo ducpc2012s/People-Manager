@@ -4,6 +4,7 @@ import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase, User, Role, Department } from '@/lib/supabase';
 import AuthContext, { AuthContextType } from '@/context/AuthContext';
 import { useAuthOperations } from '@/hooks/useAuthOperations';
+import { createAdminPermissions } from '@/services/roleService';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -76,10 +77,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, isAdmin = false) => {
     setLoading(true);
     try {
-      return await signUpOp(email, password, fullName);
+      const result = await signUpOp(email, password, fullName, isAdmin);
+      
+      // Nếu đăng ký thành công và là admin, cập nhật quyền admin
+      if (result.user && isAdmin) {
+        await createAdminPermissions();
+      }
+      
+      return result;
     } finally {
       setLoading(false);
     }

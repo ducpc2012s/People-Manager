@@ -8,7 +8,7 @@ export interface AuthOperationsResult {
   refreshUserDetails: (userId: string) => Promise<(User & { role?: Role; department?: Department }) | null>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ user: SupabaseUser | null; error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, isAdmin?: boolean) => Promise<{ user: SupabaseUser | null; error: Error | null }>;
 }
 
 export const useAuthOperations = (): AuthOperationsResult => {
@@ -72,7 +72,7 @@ export const useAuthOperations = (): AuthOperationsResult => {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, isAdmin = false) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -90,14 +90,17 @@ export const useAuthOperations = (): AuthOperationsResult => {
       }
       
       if (data.user) {
+        // Lấy role_id dựa vào isAdmin
+        const roleId = isAdmin ? 1 : 5; // 1 là Quản trị viên, 5 là Nhân viên
+        
         const { error: profileError } = await supabase
           .from('users')
           .insert({
             id: data.user.id,
             email: email,
             full_name: fullName,
-            role_id: 3,
-            department_id: 2,
+            role_id: roleId,
+            department_id: isAdmin ? 1 : 2, // Admin thuộc Ban quản lý
             status: 'active'
           });
           

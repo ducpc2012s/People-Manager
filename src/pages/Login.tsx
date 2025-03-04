@@ -1,149 +1,115 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/providers/AuthProvider";
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Building, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/providers/AuthProvider';
+import { Loader2, Lock, Mail } from 'lucide-react';
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isRegister, setIsRegister] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const [error, setError] = useState('');
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
-    
-    try {
-      if (isRegister) {
-        // Sử dụng hàm signUp từ AuthContext
-        const { user, error } = await signUp(email, password, fullName);
-        
-        if (error) {
-          throw error;
-        }
 
-        if (user) {
-          toast({
-            title: "Đăng ký thành công",
-            description: "Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.",
-          });
-          setIsRegister(false);
-        }
-      } else {
-        // Đăng nhập
-        await signIn(email, password);
-        navigate("/dashboard");
-      }
-    } catch (error: any) {
-      console.error("Lỗi:", error);
-      toast({
-        title: isRegister ? "Đăng ký thất bại" : "Đăng nhập thất bại",
-        description: error.message || "Đã xảy ra lỗi. Vui lòng thử lại.",
-        variant: "destructive",
-      });
+    try {
+      await signIn(email, password);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="flex h-screen w-full items-center justify-center bg-muted/40">
       <div className="w-full max-w-md p-4">
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-2">
-            <Building className="h-10 w-10 text-primary" />
-            <span className="font-bold text-3xl">ArchiPeople</span>
-          </div>
-        </div>
-        
-        <Card>
+        <Card className="shadow-lg">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">
-              {isRegister ? "Đăng ký tài khoản" : "Đăng nhập"}
-            </CardTitle>
-            <CardDescription>
-              {isRegister 
-                ? "Điền thông tin để tạo tài khoản mới" 
-                : "Nhập thông tin đăng nhập của bạn để truy cập hệ thống"}
+            <div className="flex justify-center mb-4">
+              <img src="/logo.svg" alt="ArchiPeople" className="h-12" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-center">ArchiPeople</CardTitle>
+            <CardDescription className="text-center">
+              Đăng nhập để quản lý công việc của bạn
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
-              {isRegister && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Họ và tên</Label>
-                  <Input 
-                    id="fullName" 
-                    type="text" 
-                    placeholder="Nguyễn Văn A" 
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required={isRegister}
-                  />
+              {error && (
+                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                  {error}
                 </div>
               )}
-              
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="admin@archipeople.com" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="email@example.com"
+                    className="pl-10"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Mật khẩu</Label>
-                  {!isRegister && (
-                    <Button type="button" variant="link" className="px-0 font-normal h-auto">
-                      Quên mật khẩu?
-                    </Button>
-                  )}
+                  <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                    Quên mật khẩu?
+                  </Link>
                 </div>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  placeholder="********" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
             </CardContent>
-            <CardFooter className="flex flex-col space-y-3">
-              <Button type="submit" className="w-full" disabled={isLoading}>
+            <CardFooter className="flex flex-col space-y-4">
+              <Button className="w-full" type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isRegister ? "Đang đăng ký..." : "Đang đăng nhập..."}
+                    Đang đăng nhập...
                   </>
                 ) : (
-                  isRegister ? "Đăng ký" : "Đăng nhập"
+                  "Đăng nhập"
                 )}
               </Button>
-              <Button 
-                type="button" 
-                variant="link" 
-                className="w-full" 
-                onClick={() => setIsRegister(!isRegister)}
-              >
-                {isRegister 
-                  ? "Đã có tài khoản? Đăng nhập" 
-                  : "Chưa có tài khoản? Đăng ký"}
-              </Button>
+              <div className="text-center text-sm text-muted-foreground">
+                Chưa có tài khoản?{" "}
+                <Link to="/admin-signup" className="text-primary hover:underline">
+                  Tạo tài khoản Admin
+                </Link>
+              </div>
             </CardFooter>
           </form>
         </Card>
