@@ -21,58 +21,75 @@ import {
   Building,
   BarChart3,
   Settings,
-  UserPlus,
   LogOut,
   Briefcase,
   FileText,
-  Lock,
   UserCog,
   LayoutDashboard,
 } from "lucide-react";
 import { ModeToggle } from "../mode-toggle";
+import { toast } from "sonner";
 
 export function MainSidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const { userDetails, signOut } = useAuth();
 
+  // Chỉ hiển thị những trang đã được triển khai
   const menuItems = [
-    { icon: LayoutDashboard, label: "Tổng quan", path: "/dashboard" },
-    { icon: Users, label: "Nhân viên", path: "/employees" },
-    { icon: ClipboardCheck, label: "Chấm công", path: "/attendance" },
-    { icon: Calendar, label: "Ngày nghỉ", path: "/leave" },
-    { icon: DollarSign, label: "Lương", path: "/payroll" },
-    { icon: UserPlus, label: "Tuyển dụng", path: "/recruitment" },
-    { icon: Briefcase, label: "Dự án", path: "/projects" },
-    { icon: Building, label: "Công trình", path: "/constructions" },
-    { icon: FileText, label: "Hồ sơ năng lực", path: "/portfolio" },
-    { icon: BarChart3, label: "Báo cáo", path: "/reports" },
-    { icon: UserCog, label: "Người dùng", path: "/user-management" },
-    { icon: Settings, label: "Cài đặt", path: "/settings" },
+    { icon: LayoutDashboard, label: "Tổng quan", path: "/dashboard", implemented: true },
+    { icon: Users, label: "Nhân viên", path: "/employees", implemented: true },
+    { icon: ClipboardCheck, label: "Chấm công", path: "/attendance", implemented: true },
+    { icon: Briefcase, label: "Dự án", path: "/projects", implemented: true },
+    { icon: UserCog, label: "Người dùng", path: "/user-management", implemented: true },
+    { icon: Settings, label: "Cài đặt", path: "/settings", implemented: false },
   ];
 
-  const handleSignOut = () => {
-    signOut();
+  // Lọc ra những menu đã được triển khai
+  const availableMenuItems = menuItems.filter(item => item.implemented);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Đăng xuất thành công");
+    } catch (error) {
+      console.error("Lỗi khi đăng xuất:", error);
+      toast.error("Đăng xuất thất bại, vui lòng thử lại");
+    }
+  };
+
+  const toggleSidebar = () => {
+    setCollapsed(!collapsed);
   };
 
   return (
-    <Sidebar className="border-r shadow-sm">
+    <Sidebar className={`border-r shadow-sm transition-all duration-300 ${collapsed ? "w-16" : "w-64"}`}>
       <SidebarHeader className="border-b py-4">
-        <div className="flex items-center gap-2 px-4">
-          <Building className="h-6 w-6 text-primary" />
-          {!collapsed && (
-            <span className="font-semibold text-lg">ArchiPeople</span>
-          )}
+        <div className="flex items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <Building className="h-6 w-6 text-primary" />
+            {!collapsed && (
+              <span className="font-semibold text-lg">ArchiPeople</span>
+            )}
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={toggleSidebar}
+            className="h-8 w-8 p-0"
+          >
+            {collapsed ? "→" : "←"}
+          </Button>
         </div>
       </SidebarHeader>
       <SidebarContent className="py-2">
         <SidebarMenu>
-          {menuItems.map((item) => (
+          {availableMenuItems.map((item) => (
             <SidebarMenuItem key={item.path}>
               <SidebarMenuButton asChild>
                 <Link
                   to={item.path}
-                  className={`flex items-center gap-2 py-2 ${
+                  className={`flex items-center gap-2 py-2 px-4 ${
                     location.pathname === item.path
                       ? "bg-accent text-accent-foreground font-medium"
                       : "text-sidebar-foreground hover:bg-accent/50"
@@ -100,8 +117,8 @@ export function MainSidebar() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="text-sm font-medium">{userDetails?.full_name || "Người dùng"}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-sm font-medium truncate max-w-[140px]">{userDetails?.full_name || "Người dùng"}</span>
+                <span className="text-xs text-muted-foreground truncate max-w-[140px]">
                   {userDetails?.email || ""}
                 </span>
               </div>
@@ -114,6 +131,7 @@ export function MainSidebar() {
               size="icon"
               className="text-muted-foreground"
               onClick={handleSignOut}
+              title="Đăng xuất"
             >
               <LogOut className="h-5 w-5" />
             </Button>

@@ -1,24 +1,32 @@
 
-import { supabase, Attendance, Employee } from '@/lib/supabase';
+import { supabase, Attendance } from '@/lib/supabase';
 
-export const fetchAttendanceByDate = async (date: string): Promise<(Attendance & { employee?: Employee })[]> => {
-  const { data, error } = await supabase
+export const fetchAttendance = async (date?: string): Promise<Attendance[]> => {
+  let query = supabase
     .from('attendance')
     .select(`
       *,
-      employees:employee_id(*)
+      employee:employee_id(
+        id,
+        employee_code,
+        position,
+        user_id(id, full_name, email, avatar_url)
+      )
     `)
-    .eq('date', date)
-    .order('created_at', { ascending: false });
+    .order('date', { ascending: false });
+
+  if (date) {
+    query = query.eq('date', date);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
+    console.error('Error fetching attendance:', error);
     throw error;
   }
 
-  return data.map(attendance => ({
-    ...attendance,
-    employee: attendance.employees
-  })) || [];
+  return data || [];
 };
 
 export const fetchAttendanceByEmployee = async (employeeId: number): Promise<Attendance[]> => {
@@ -29,55 +37,62 @@ export const fetchAttendanceByEmployee = async (employeeId: number): Promise<Att
     .order('date', { ascending: false });
 
   if (error) {
+    console.error('Error fetching employee attendance:', error);
     throw error;
   }
 
   return data || [];
 };
 
-export const recordAttendance = async (attendanceData: Partial<Attendance>): Promise<Attendance> => {
-  // Kiểm tra nếu đã có bản ghi cho ngày và nhân viên này
+export const checkIn = async (employeeId: number, date: string, time: string): Promise<Attendance> => {
+  // Kiểm tra xem đã có bản ghi chấm công cho ngày hôm nay chưa
   const { data: existingRecord, error: checkError } = await supabase
     .from('attendance')
     .select('*')
-    .eq('employee_id', attendanceData.employee_id!)
-    .eq('date', attendanceData.date!)
+    .eq('employee_id', employeeId)
+    .eq('date', date)
     .maybeSingle();
 
   if (checkError) {
+    console.error('Error checking existing attendance:', checkError);
     throw checkError;
   }
 
   if (existingRecord) {
-    // Cập nhật bản ghi hiện có
+    // Nếu đã có bản ghi, cập nhật check_in
     const { data, error } = await supabase
       .from('attendance')
       .update({
-        ...attendanceData,
-        updated_at: new Date().toISOString()
+        check_in: time,
+        status: 'present',
       })
       .eq('id', existingRecord.id)
       .select()
       .single();
 
     if (error) {
+      console.error('Error updating check-in:', error);
       throw error;
     }
 
     return data;
   } else {
-    // Tạo bản ghi mới
+    // Nếu chưa có, tạo bản ghi mới
     const { data, error } = await supabase
       .from('attendance')
-      .insert({
-        ...attendanceData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
+      .insert([
+        {
+          employee_id: employeeId,
+          date,
+          check_in: time,
+          status: 'present',
+        },
+      ])
       .select()
       .single();
 
     if (error) {
+      console.error('Error creating check-in:', error);
       throw error;
     }
 
@@ -85,16 +100,51 @@ export const recordAttendance = async (attendanceData: Partial<Attendance>): Pro
   }
 };
 
-export const calculateWorkHours = (checkIn: string, checkOut: string): number => {
-  const checkInTime = new Date(`1970-01-01T${checkIn}`);
-  const checkOutTime = new Date(`1970-01-01T${checkOut}`);
-  
-  // Nếu checkOut là ngày hôm sau, thêm 1 ngày
-  if (checkOutTime < checkInTime) {
-    checkOutTime.setDate(checkOutTime.getDate() + 1);
+export const checkOut = async (attendanceId: number, time: string): Promise<Attendance> => {
+  const { data, error } = await supabase
+    .from('attendance')
+    .update({
+      check_out: time,
+    })
+    .eq('id', attendanceId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating check-out:', error);
+    throw error;
   }
-  
-  const diffMs = checkOutTime.getTime() - checkInTime.getTime();
-  // Chuyển đổi từ milliseconds sang giờ
-  return Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100;
+
+  return data;
+};
+
+export const updateAttendance = async (
+  attendanceId: number,
+  attendanceData: Partial<Attendance>
+): Promise<Attendance> => {
+  const { data, error } = await supabase
+    .from('attendance')
+    .update(attendanceData)
+    .eq('id', attendanceId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating attendance:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const deleteAttendance = async (attendanceId: number): Promise<void> => {
+  const { error } = await supabase
+    .from('attendance')
+    .delete()
+    .eq('id', attendanceId);
+
+  if (error) {
+    console.error('Error deleting attendance:', error);
+    throw error;
+  }
 };
