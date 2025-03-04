@@ -1,5 +1,5 @@
 
-import { supabase, User, Role, Department, Permission } from '@/lib/supabase';
+import { supabase, User, Role, Department } from '@/lib/supabase';
 
 export const fetchUsers = async (): Promise<(User & { role?: Role, department?: Department })[]> => {
   const { data, error } = await supabase
@@ -37,11 +37,15 @@ export const fetchUser = async (userId: string): Promise<(User & { role?: Role, 
 };
 
 export const createUser = async (userData: Partial<User>, password: string): Promise<User> => {
-  // Đầu tiên tạo auth user
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+  // First, create the auth user using signUp instead of admin.createUser
+  const { data: authData, error: authError } = await supabase.auth.signUp({
     email: userData.email!,
     password: password,
-    email_confirm: true,
+    options: {
+      data: {
+        full_name: userData.full_name,
+      },
+    }
   });
 
   if (authError) {
@@ -52,7 +56,7 @@ export const createUser = async (userData: Partial<User>, password: string): Pro
     throw new Error('Failed to create user');
   }
 
-  // Sau đó tạo user profile
+  // Then create user profile
   const { data, error } = await supabase
     .from('users')
     .insert({
@@ -64,8 +68,8 @@ export const createUser = async (userData: Partial<User>, password: string): Pro
     .single();
 
   if (error) {
-    // Rollback - xóa auth user nếu không tạo được profile
-    await supabase.auth.admin.deleteUser(authData.user.id);
+    // We cannot delete the auth user since we don't have admin rights
+    // Just throw the error for now
     throw error;
   }
 
@@ -88,14 +92,8 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {
-  // Xóa auth user
-  const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-
-  if (authError) {
-    throw authError;
-  }
-
-  // Xóa user profile
+  // We can't delete auth users without admin rights
+  // Just delete the user profile for now
   const { error } = await supabase
     .from('users')
     .delete()

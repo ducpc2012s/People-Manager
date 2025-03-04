@@ -1,3 +1,4 @@
+
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase, User, Role, Department } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -73,6 +74,7 @@ export const useAuthOperations = (): AuthOperationsResult => {
 
   const signUp = async (email: string, password: string, fullName: string, isAdmin = false) => {
     try {
+      // We'll use the standard signUp method since we don't have admin rights
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -90,7 +92,7 @@ export const useAuthOperations = (): AuthOperationsResult => {
       
       if (data.user) {
         // Get role_id based on isAdmin
-        const roleId = isAdmin ? 1 : 5; // 1 is Administrator, 5 is Employee
+        const roleId = isAdmin ? 1 : 3; // 1 is Administrator, 3 is Employee
         
         const { error: profileError } = await supabase
           .from('users')

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchRoles } from "@/services/roleService";
@@ -59,17 +58,29 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       toast({
         title: "Thành công",
-        description: "Người dùng đã được tạo",
+        description: "Người dùng đã được tạo. Email xác nhận đã được gửi.",
       });
       onOpenChange(false);
       resetForm();
     },
     onError: (error: any) => {
+      let errorMessage = error.message || "Không thể tạo người dùng";
+      
+      if (error.code === "23505" || errorMessage.includes("unique constraint")) {
+        errorMessage = "Email này đã được sử dụng. Vui lòng sử dụng email khác.";
+      } else if (errorMessage.includes("User already registered")) {
+        errorMessage = "Người dùng đã tồn tại với email này.";
+      } else if (errorMessage.includes("Password should be at least")) {
+        errorMessage = "Mật khẩu phải có ít nhất 6 ký tự.";
+      }
+      
       toast({
         title: "Lỗi",
-        description: error.message || "Không thể tạo người dùng",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      console.error("Error creating user:", error);
     },
   });
 
@@ -85,24 +96,61 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
   };
 
   const handleSubmit = () => {
-    if (newUser.full_name && newUser.email && newUser.password && newUser.role_id && newUser.department_id) {
-      createUserMutation.mutate({
-        user: {
-          full_name: newUser.full_name,
-          email: newUser.email,
-          role_id: newUser.role_id,
-          department_id: newUser.department_id,
-          status: newUser.status,
-        },
-        password: newUser.password,
-      });
-    } else {
+    if (!newUser.full_name) {
       toast({
         title: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin người dùng",
+        description: "Vui lòng nhập họ tên người dùng",
         variant: "destructive",
       });
+      return;
     }
+    
+    if (!newUser.email) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng nhập email",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!newUser.password) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng nhập mật khẩu",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!newUser.role_id) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng chọn vai trò",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!newUser.department_id) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng chọn phòng ban",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createUserMutation.mutate({
+      user: {
+        full_name: newUser.full_name,
+        email: newUser.email,
+        role_id: newUser.role_id,
+        department_id: newUser.department_id,
+        status: newUser.status,
+      },
+      password: newUser.password,
+    });
   };
 
   return (
