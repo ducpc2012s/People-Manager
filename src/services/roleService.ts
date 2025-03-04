@@ -94,8 +94,12 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
     return false;
   }
   
-  // Kiểm tra xem data và data.roles có tồn tại và nó có phải là một đối tượng với thuộc tính name
-  return data && data.roles && typeof data.roles === 'object' && data.roles.name === 'Quản trị viên';
+  // Fix the type error: Check if data.roles exists, is an object, and has a name property
+  if (data && data.roles && typeof data.roles === 'object' && 'name' in data.roles) {
+    return data.roles.name === 'Quản trị viên';
+  }
+  
+  return false;
 }
 
 export async function checkPermission(
@@ -206,4 +210,31 @@ export async function createAdminPermissions(): Promise<void> {
   } catch (error) {
     console.error("Lỗi khi tạo quyền admin:", error);
   }
+}
+
+// Add the missing functions that role-dialog.tsx is expecting
+
+export async function fetchRoleWithPermissions(roleId: number): Promise<{role: Role, permissions: Permission[]}> {
+  // Fetch the role
+  const role = await fetchRole(roleId);
+  if (!role) {
+    throw new Error(`Không tìm thấy vai trò với ID: ${roleId}`);
+  }
+  
+  // Fetch the role's permissions
+  const permissions = await fetchPermissions(roleId);
+  
+  return { role, permissions };
+}
+
+// This function is basically an alias for savePermissions but with specific signature
+export async function setRolePermissions(roleId: number, permissions: Partial<Permission>[]): Promise<void> {
+  // Ensure all permissions have the correct role_id
+  const permissionsWithRoleId = permissions.map(permission => ({
+    ...permission,
+    role_id: roleId
+  }));
+  
+  // Save the permissions using the existing function
+  return savePermissions(permissionsWithRoleId);
 }
