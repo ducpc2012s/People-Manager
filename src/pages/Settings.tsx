@@ -37,7 +37,7 @@ const Settings = () => {
       if (error) throw error;
       
       toast.success("Cập nhật thông tin thành công");
-      refreshUserDetails(userDetails.id);
+      refreshUserDetails(); // Removed the argument here
     } catch (error) {
       console.error('Lỗi khi cập nhật thông tin:', error);
       toast.error("Cập nhật thông tin thất bại");

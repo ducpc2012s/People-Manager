@@ -40,13 +40,11 @@ export const useRealtimeData = (
           queryClient.invalidateQueries({ queryKey: Array.isArray(queryKey) ? queryKey : [queryKey] });
         }
       )
-      .subscribe((status) => {
-        console.log(`Realtime subscription status for ${table}:`, status);
-      });
+      .subscribe();
 
     // Cleanup khi component unmount
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [queryKey, table, schema, event, filter, queryClient]);
 };
