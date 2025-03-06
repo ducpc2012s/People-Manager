@@ -41,52 +41,52 @@ export const fetchUser = async (userId: string): Promise<(User & { role?: Role, 
 export const createUser = async (userData: Partial<User>, password: string): Promise<User> => {
   console.log("Creating user with data:", userData);
   
-  // First, create the auth user
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email: userData.email!,
-    password: password,
-    email_confirm: true,
-    user_metadata: {
-      full_name: userData.full_name,
-    }
-  });
-
-  if (authError) {
-    console.error("Error creating auth user:", authError);
-    
-    // Fallback to regular signUp if admin API is not available
-    const { data: fallbackData, error: fallbackError } = await supabase.auth.signUp({
+  try {
+    // First, create the auth user using admin API
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: userData.email!,
       password: password,
-      options: {
-        data: {
-          full_name: userData.full_name,
-        }
+      email_confirm: true,
+      user_metadata: {
+        full_name: userData.full_name,
       }
     });
-    
-    if (fallbackError) {
-      console.error("Error in fallback auth signup:", fallbackError);
-      throw fallbackError;
+
+    if (authError) {
+      console.error("Error creating auth user (admin method):", authError);
+      
+      // Fallback to regular signUp if admin API is not available
+      const { data: fallbackData, error: fallbackError } = await supabase.auth.signUp({
+        email: userData.email!,
+        password: password,
+        options: {
+          data: {
+            full_name: userData.full_name,
+          }
+        }
+      });
+      
+      if (fallbackError) {
+        console.error("Error in fallback auth signup:", fallbackError);
+        throw fallbackError;
+      }
+      
+      if (!fallbackData.user) {
+        console.error("No user returned from fallback auth signup");
+        throw new Error('Không thể tạo người dùng trong hệ thống xác thực');
+      }
+      
+      authData.user = fallbackData.user;
     }
-    
-    if (!fallbackData.user) {
-      console.error("No user returned from fallback auth signup");
+
+    if (!authData.user) {
+      console.error("No user returned from auth signup");
       throw new Error('Không thể tạo người dùng trong hệ thống xác thực');
     }
-    
-    authData.user = fallbackData.user;
-  }
 
-  if (!authData.user) {
-    console.error("No user returned from auth signup");
-    throw new Error('Không thể tạo người dùng trong hệ thống xác thực');
-  }
+    console.log("Auth user created:", authData.user.id);
 
-  console.log("Auth user created:", authData.user.id);
-
-  // Then create user profile in the users table
-  try {
+    // Then create user profile in the users table
     const { data, error } = await supabase
       .from('users')
       .insert({
@@ -108,7 +108,7 @@ export const createUser = async (userData: Partial<User>, password: string): Pro
     console.log("User profile created:", data);
     return data;
   } catch (error) {
-    console.error("Exception creating user profile:", error);
+    console.error("Exception creating user:", error);
     throw error;
   }
 };

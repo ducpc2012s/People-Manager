@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,9 +75,12 @@ const Login = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Mật khẩu</Label>
-                  <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                  <Button variant="link" className="px-0 h-auto text-sm" onClick={(e) => {
+                    e.preventDefault();
+                    alert('Chức năng quên mật khẩu sẽ được triển khai trong phiên bản tiếp theo.');
+                  }}>
                     Quên mật khẩu?
-                  </Link>
+                  </Button>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -105,10 +108,7 @@ const Login = () => {
                 )}
               </Button>
               <div className="text-center text-sm text-muted-foreground">
-                Chưa có tài khoản?{" "}
-                <Link to="/admin-signup" className="text-primary hover:underline">
-                  Tạo tài khoản Admin
-                </Link>
+                Liên hệ quản trị viên để được cấp tài khoản truy cập hệ thống
               </div>
             </CardFooter>
           </form>

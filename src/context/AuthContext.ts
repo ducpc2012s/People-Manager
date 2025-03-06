@@ -11,7 +11,6 @@ export type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUserDetails: () => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ user: SupabaseUser | null; error: Error | null }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

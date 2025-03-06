@@ -12,7 +12,6 @@ import Attendance from '@/pages/Attendance';
 import Projects from '@/pages/Projects';
 import Settings from '@/pages/Settings';
 import UserManagement from '@/pages/UserManagement';
-import AdminSignup from '@/pages/AdminSignup';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -33,7 +32,6 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/admin-signup" element={<AdminSignup />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/employees" element={<Employees />} />
               <Route path="/attendance" element={<Attendance />} />

@@ -1,9 +1,9 @@
+
 import { useContext, useEffect, useState } from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase, User, Role, Department } from '@/lib/supabase';
 import AuthContext, { AuthContextType } from '@/context/AuthContext';
 import { useAuthOperations } from '@/hooks/useAuthOperations';
-import { createAdminPermissions } from '@/services/roleService';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -16,7 +16,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     refreshUserDetails: refreshUserDetailsOp,
     signIn: signInOp,
     signOut: signOutOp,
-    signUp: signUpOp
   } = useAuthOperations();
 
   useEffect(() => {
@@ -76,22 +75,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
-    setLoading(true);
-    try {
-      const isAdmin = true; // Since this is called from AdminSignup, we know the user is admin
-      const result = await signUpOp(email, password, fullName, isAdmin);
-      
-      if (result.user) {
-        await createAdminPermissions();
-      }
-      
-      return result;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const signOut = async () => {
     setLoading(true);
     try {
@@ -111,7 +94,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       signIn, 
       signOut, 
       refreshUserDetails,
-      signUp
     }}>
       {children}
     </AuthContext.Provider>
