@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchRoles } from "@/services/roleService";
@@ -52,9 +53,12 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
 
   // Mutation for creating a user
   const createUserMutation = useMutation({
-    mutationFn: (userData: { user: Partial<typeof newUser>; password: string }) => 
-      createUser(userData.user, userData.password),
-    onSuccess: () => {
+    mutationFn: (userData: { user: Partial<typeof newUser>; password: string }) => {
+      console.log("Creating user with data:", userData);
+      return createUser(userData.user, userData.password);
+    },
+    onSuccess: (data) => {
+      console.log("User created successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["users"] });
       toast({
         title: "Thành công",
@@ -64,6 +68,8 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
       resetForm();
     },
     onError: (error: any) => {
+      console.error("Error in createUserMutation:", error);
+      
       let errorMessage = error.message || "Không thể tạo người dùng";
       
       if (error.code === "23505" || errorMessage.includes("unique constraint")) {
@@ -79,8 +85,6 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
         description: errorMessage,
         variant: "destructive",
       });
-      
-      console.error("Error creating user:", error);
     },
   });
 
@@ -96,6 +100,8 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
   };
 
   const handleSubmit = () => {
+    console.log("Form submitted with data:", newUser);
+    
     if (!newUser.full_name) {
       toast({
         title: "Lỗi",

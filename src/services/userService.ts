@@ -12,6 +12,7 @@ export const fetchUsers = async (): Promise<(User & { role?: Role, department?: 
     .order('created_at', { ascending: false });
 
   if (error) {
+    console.error("Error fetching users:", error);
     throw error;
   }
 
@@ -30,6 +31,7 @@ export const fetchUser = async (userId: string): Promise<(User & { role?: Role, 
     .single();
 
   if (error) {
+    console.error("Error fetching user:", error);
     throw error;
   }
 
@@ -37,7 +39,9 @@ export const fetchUser = async (userId: string): Promise<(User & { role?: Role, 
 };
 
 export const createUser = async (userData: Partial<User>, password: string): Promise<User> => {
-  // First, create the auth user using signUp instead of admin.createUser
+  console.log("Creating user with data:", userData);
+  
+  // First, create the auth user
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: userData.email!,
     password: password,
@@ -49,31 +53,43 @@ export const createUser = async (userData: Partial<User>, password: string): Pro
   });
 
   if (authError) {
+    console.error("Error creating auth user:", authError);
     throw authError;
   }
 
   if (!authData.user) {
-    throw new Error('Failed to create user');
+    console.error("No user returned from auth signup");
+    throw new Error('Không thể tạo người dùng trong hệ thống xác thực');
   }
 
-  // Then create user profile
-  const { data, error } = await supabase
-    .from('users')
-    .insert({
-      ...userData,
-      id: authData.user.id,
-      status: 'active',
-    })
-    .select()
-    .single();
+  console.log("Auth user created:", authData.user.id);
 
-  if (error) {
-    // We cannot delete the auth user since we don't have admin rights
-    // Just throw the error for now
+  // Then create user profile in the users table
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        id: authData.user.id,
+        email: userData.email,
+        full_name: userData.full_name,
+        role_id: userData.role_id,
+        department_id: userData.department_id,
+        status: userData.status || 'active',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating user profile:", error);
+      throw error;
+    }
+
+    console.log("User profile created:", data);
+    return data;
+  } catch (error) {
+    console.error("Exception creating user profile:", error);
     throw error;
   }
-
-  return data;
 };
 
 export const updateUser = async (userId: string, userData: Partial<User>): Promise<User> => {
@@ -85,6 +101,7 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
     .single();
 
   if (error) {
+    console.error("Error updating user:", error);
     throw error;
   }
 
@@ -100,6 +117,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
     .eq('id', userId);
 
   if (error) {
+    console.error("Error deleting user:", error);
     throw error;
   }
 };

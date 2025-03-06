@@ -27,6 +27,7 @@ export const useAuthOperations = (): AuthOperationsResult => {
         .single();
 
       if (error) {
+        console.error("Error fetching user details:", error);
         throw error;
       }
 
@@ -51,9 +52,11 @@ export const useAuthOperations = (): AuthOperationsResult => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log("Attempting to sign in:", email);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
+        console.error("Sign in error:", error);
         toast({
           title: "Đăng nhập thất bại",
           description: error.message,
@@ -74,6 +77,7 @@ export const useAuthOperations = (): AuthOperationsResult => {
 
   const signUp = async (email: string, password: string, fullName: string, isAdmin = false) => {
     try {
+      console.log("Signing up user:", email, "isAdmin:", isAdmin);
       // We'll use the standard signUp method since we don't have admin rights
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -87,10 +91,12 @@ export const useAuthOperations = (): AuthOperationsResult => {
       });
       
       if (error) {
+        console.error("Sign up error:", error);
         throw error;
       }
       
       if (data.user) {
+        console.log("Auth user created:", data.user.id);
         // Get role_id based on isAdmin
         const roleId = isAdmin ? 1 : 3; // 1 is Administrator, 3 is Employee
         
@@ -135,6 +141,7 @@ export const useAuthOperations = (): AuthOperationsResult => {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
+        console.error("Sign out error:", error);
         throw error;
       }
       

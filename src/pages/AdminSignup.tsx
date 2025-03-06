@@ -31,14 +31,17 @@ const AdminSignup = () => {
 
     setLoading(true);
     try {
+      console.log("Attempting to create admin account:", email);
       // Pass true as the fourth parameter to signUp to indicate this is an admin user
       const { user, error } = await signUp(email, password, fullName, true);
       
       if (error) {
+        console.error("Admin signup error:", error);
         throw error;
       }
 
       if (user) {
+        console.log("Admin account created successfully:", user.id);
         toast({
           title: 'Thành công',
           description: 'Tài khoản admin đã được tạo. Vui lòng đăng nhập.',
@@ -52,6 +55,7 @@ const AdminSignup = () => {
         });
       }
     } catch (error: any) {
+      console.error("Exception in admin signup:", error);
       toast({
         title: 'Lỗi',
         description: error.message || 'Không thể tạo tài khoản admin',
