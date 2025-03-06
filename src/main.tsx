@@ -7,8 +7,9 @@ import { supabase } from '@/lib/supabase'
 // Kiểm tra kết nối Supabase trước khi render app
 const initApp = async () => {
   try {
-    // Kiểm tra kết nối Supabase
-    const { error } = await supabase.from('roles').select('count', { count: 'exact', head: true });
+    // Kiểm tra kết nối Supabase bằng cách truy vấn đơn giản hơn
+    // Sử dụng truy vấn departments thay vì roles để tránh vấn đề RLS đệ quy
+    const { error } = await supabase.from('departments').select('count', { count: 'exact', head: true });
     
     if (error) {
       console.error('Lỗi kết nối Supabase:', error.message);
