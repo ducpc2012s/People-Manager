@@ -42,19 +42,40 @@ export const createUser = async (userData: Partial<User>, password: string): Pro
   console.log("Creating user with data:", userData);
   
   // First, create the auth user
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: userData.email!,
     password: password,
-    options: {
-      data: {
-        full_name: userData.full_name,
-      },
+    email_confirm: true,
+    user_metadata: {
+      full_name: userData.full_name,
     }
   });
 
   if (authError) {
     console.error("Error creating auth user:", authError);
-    throw authError;
+    
+    // Fallback to regular signUp if admin API is not available
+    const { data: fallbackData, error: fallbackError } = await supabase.auth.signUp({
+      email: userData.email!,
+      password: password,
+      options: {
+        data: {
+          full_name: userData.full_name,
+        }
+      }
+    });
+    
+    if (fallbackError) {
+      console.error("Error in fallback auth signup:", fallbackError);
+      throw fallbackError;
+    }
+    
+    if (!fallbackData.user) {
+      console.error("No user returned from fallback auth signup");
+      throw new Error('Không thể tạo người dùng trong hệ thống xác thực');
+    }
+    
+    authData.user = fallbackData.user;
   }
 
   if (!authData.user) {
@@ -109,15 +130,26 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {
-  // We can't delete auth users without admin rights
-  // Just delete the user profile for now
+  // First, we try to delete the auth user if we have admin rights
+  try {
+    const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+    if (authError) {
+      console.error("Error deleting auth user (admin method):", authError);
+      // Continue to delete the user profile even if auth deletion fails
+    }
+  } catch (error) {
+    console.error("Cannot delete auth user (admin method):", error);
+    // Continue to delete the user profile even if auth deletion fails
+  }
+
+  // Delete the user profile
   const { error } = await supabase
     .from('users')
     .delete()
     .eq('id', userId);
 
   if (error) {
-    console.error("Error deleting user:", error);
+    console.error("Error deleting user profile:", error);
     throw error;
   }
 };

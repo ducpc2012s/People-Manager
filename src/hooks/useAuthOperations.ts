@@ -65,6 +65,20 @@ export const useAuthOperations = (): AuthOperationsResult => {
         throw error;
       }
 
+      // Update last_login in the users table
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData?.user) {
+        try {
+          await supabase
+            .from('users')
+            .update({ last_login: new Date().toISOString() })
+            .eq('id', authData.user.id);
+        } catch (updateError) {
+          console.error("Error updating last login:", updateError);
+          // Non-critical error, so we don't throw
+        }
+      }
+
       toast({
         title: "Đăng nhập thành công",
         description: "Chào mừng bạn quay trở lại",
@@ -78,7 +92,8 @@ export const useAuthOperations = (): AuthOperationsResult => {
   const signUp = async (email: string, password: string, fullName: string, isAdmin = false) => {
     try {
       console.log("Signing up user:", email, "isAdmin:", isAdmin);
-      // We'll use the standard signUp method since we don't have admin rights
+      
+      // Đầu tiên, tạo người dùng trong hệ thống auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -100,6 +115,7 @@ export const useAuthOperations = (): AuthOperationsResult => {
         // Get role_id based on isAdmin
         const roleId = isAdmin ? 1 : 3; // 1 is Administrator, 3 is Employee
         
+        // Sau đó, tạo hồ sơ người dùng trong bảng users
         const { error: profileError } = await supabase
           .from('users')
           .insert({

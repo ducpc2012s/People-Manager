@@ -28,6 +28,15 @@ const AdminSignup = () => {
       });
       return;
     }
+    
+    if (password.length < 6) {
+      toast({
+        title: 'Lỗi',
+        description: 'Mật khẩu phải có ít nhất 6 ký tự',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -56,9 +65,15 @@ const AdminSignup = () => {
       }
     } catch (error: any) {
       console.error("Exception in admin signup:", error);
+      let errorMessage = error.message || 'Không thể tạo tài khoản admin';
+      
+      if (errorMessage.includes("User already registered")) {
+        errorMessage = "Email này đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập.";
+      }
+      
       toast({
         title: 'Lỗi',
-        description: error.message || 'Không thể tạo tài khoản admin',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
